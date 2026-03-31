@@ -284,20 +284,37 @@ static bool parse_ARRAY(json_object const* object, jstruct_value_t const* value,
 
     size_t const array_len = json_object_array_length(object);
 
-    if (array_len > value->data.array.num_elements) {
-        if (result != nullptr) {
-            result->type = JSTRUCT_PARSE_RESULT_TYPE_OUT_OF_BOUNDS;
+    void* array_ptr = nullptr;
+    if (value->data.array.num_elements == 0) {
+        array_ptr = malloc(value->data.array.element_size * array_len);
+        if (array_ptr == nullptr) {
+            if (result != nullptr) {
+                result->type = JSTRUCT_PARSE_RESULT_TYPE_OUT_OF_MEMORY;
+            }
+
+            return false;
         }
 
-        return false;        
-    }
+        void** array_ptr_ptr = (void**) (((uint8_t*) out.any) + sizeof(size_t));
+        *array_ptr_ptr = array_ptr;
+    } else {
+        if (array_len > value->data.array.num_elements) {
+            if (result != nullptr) {
+                result->type = JSTRUCT_PARSE_RESULT_TYPE_OUT_OF_BOUNDS;
+            }
+
+            return false;        
+        }
+
+        array_ptr = ((uint8_t*) out.any) + sizeof(size_t);
+    } 
 
     size_t* const out_array_len = out.usize;
     *out_array_len = array_len;
 
     fn_parser_t const parser_fn = PARSERS[value->data.array.value_type->type];
 
-    void* offset_ptr = ((uint8_t*) out.any) + sizeof(size_t);
+    void* offset_ptr = array_ptr;
     for (size_t i = 0; i < array_len; i++) {
         json_object const* const child_object = json_object_array_get_idx(object, i);
 

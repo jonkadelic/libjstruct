@@ -60,7 +60,7 @@ typedef struct jstruct_value {
         /**< Configuration for JSTRUCT_VALUE_TYPE_ARRAY */
         struct {
             jstruct_value_t* value_type; /**< Type of elements in the array */
-            size_t num_elements;         /**< Maximum number of elements */
+            size_t num_elements;         /**< Maximum number of elements. Allocated dynamically if 0. */
             size_t element_size;         /**< Size of each element in bytes */
         } array;
         /**< Configuration for JSTRUCT_VALUE_TYPE_STRING */

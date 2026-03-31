@@ -27,6 +27,7 @@ typedef enum jstruct_parse_result_type {
     JSTRUCT_PARSE_RESULT_TYPE_MISSING_FIELD,          /**< Required object field is missing */
     JSTRUCT_PARSE_RESULT_TYPE_BAD_ARRAY_ELEMENT,      /**< Array element failed to parse */
     JSTRUCT_PARSE_RESULT_TYPE_CUSTOM_PARSE_FAILED,    /**< Custom parser function returned false */
+    JSTRUCT_PARSE_RESULT_TYPE_OUT_OF_MEMORY,          /**< Failed to allocate memory for array */
 } jstruct_parse_result_type_t;
 
 /**

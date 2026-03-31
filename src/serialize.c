@@ -138,7 +138,15 @@ static bool serialize_ARRAY(jstruct_value_t const* value, json_object** object, 
 
     fn_serializer_t const serializer_fn = SERIALIZERS[value->data.array.value_type->type];
 
-    void const* offset_ptr = ((uint8_t const*) in.any) + sizeof(size_t);
+    void const* array_ptr;
+    if (value->data.array.num_elements == 0) {
+        void const* const* array_ptr_ptr = (void const* const*) (((uint8_t const*) in.any) + sizeof(size_t));
+        array_ptr = *array_ptr_ptr;
+    } else {
+        array_ptr = ((uint8_t const*) in.any) + sizeof(size_t);
+    }
+
+    void const* offset_ptr = array_ptr;
     for (size_t i = 0; i < array_len; i++) {
         json_object* child_object = nullptr;
 

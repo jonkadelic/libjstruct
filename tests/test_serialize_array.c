@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unity.h>
 
@@ -21,6 +22,16 @@ typedef struct {
     size_t length;
     point_t elements[MAX_ARRAY_SIZE];
 } point_array_t;
+
+typedef struct {
+    size_t length;
+    int32_t* elements;
+} int_dyn_array_t;
+
+typedef struct {
+    size_t length;
+    point_t* elements;
+} point_dyn_array_t;
 
 static jstruct_value_t i32_element_value = {
     .type = JSTRUCT_VALUE_TYPE_I32
@@ -65,6 +76,24 @@ static jstruct_value_t const point_array_value = {
     .data.array = {
         .value_type = &point_element_value,
         .num_elements = MAX_ARRAY_SIZE,
+        .element_size = sizeof(point_t)
+    }
+};
+
+static jstruct_value_t const int_dyn_array_value = {
+    .type = JSTRUCT_VALUE_TYPE_ARRAY,
+    .data.array = {
+        .value_type = &i32_element_value,
+        .num_elements = 0,
+        .element_size = sizeof(int32_t)
+    }
+};
+
+static jstruct_value_t const point_dyn_array_value = {
+    .type = JSTRUCT_VALUE_TYPE_ARRAY,
+    .data.array = {
+        .value_type = &point_element_value,
+        .num_elements = 0,
         .element_size = sizeof(point_t)
     }
 };
@@ -139,6 +168,75 @@ void test_array_of_objects(void) {
     TEST_ASSERT_TRUE(strstr(buffer, "\"y\"") != nullptr);
 }
 
+void test_dynamic_empty_array(void) {
+    int_dyn_array_t const input = {
+        .length = 0,
+        .elements = nullptr
+    };
+    char buffer[256] = {0};
+
+    bool success = jstruct_serialize(&int_dyn_array_value, &input, sizeof(buffer), buffer);
+
+    TEST_ASSERT_TRUE(success);
+    TEST_ASSERT_TRUE(strstr(buffer, "[") != nullptr && strstr(buffer, "]") != nullptr);
+}
+
+void test_dynamic_single_element(void) {
+    int32_t elements[] = {42};
+    int_dyn_array_t const input = {
+        .length = 1,
+        .elements = elements
+    };
+    char buffer[256] = {0};
+
+    bool success = jstruct_serialize(&int_dyn_array_value, &input, sizeof(buffer), buffer);
+
+    TEST_ASSERT_TRUE(success);
+    TEST_ASSERT_TRUE(strstr(buffer, "42") != nullptr);
+    TEST_ASSERT_TRUE(buffer[0] == '[');
+    TEST_ASSERT_TRUE(buffer[strlen(buffer) - 1] == ']');
+}
+
+void test_dynamic_multiple_elements(void) {
+    int32_t elements[] = {10, 20, 30, 40, 50};
+    int_dyn_array_t const input = {
+        .length = 5,
+        .elements = elements
+    };
+    char buffer[256] = {0};
+
+    bool success = jstruct_serialize(&int_dyn_array_value, &input, sizeof(buffer), buffer);
+
+    TEST_ASSERT_TRUE(success);
+    TEST_ASSERT_TRUE(strstr(buffer, "10") != nullptr);
+    TEST_ASSERT_TRUE(strstr(buffer, "20") != nullptr);
+    TEST_ASSERT_TRUE(strstr(buffer, "30") != nullptr);
+    TEST_ASSERT_TRUE(strstr(buffer, "40") != nullptr);
+    TEST_ASSERT_TRUE(strstr(buffer, "50") != nullptr);
+    TEST_ASSERT_TRUE(buffer[0] == '[');
+    TEST_ASSERT_TRUE(buffer[strlen(buffer) - 1] == ']');
+}
+
+void test_dynamic_array_of_objects(void) {
+    point_t elements[] = {
+        {.x = 1, .y = 2},
+        {.x = 3, .y = 4}
+    };
+    point_dyn_array_t const input = {
+        .length = 2,
+        .elements = elements
+    };
+    char buffer[512] = {0};
+
+    bool success = jstruct_serialize(&point_dyn_array_value, &input, sizeof(buffer), buffer);
+
+    TEST_ASSERT_TRUE(success);
+    TEST_ASSERT_TRUE(strstr(buffer, "\"x\"") != nullptr);
+    TEST_ASSERT_TRUE(strstr(buffer, "\"y\"") != nullptr);
+    TEST_ASSERT_TRUE(buffer[0] == '[');
+    TEST_ASSERT_TRUE(buffer[strlen(buffer) - 1] == ']');
+}
+
 void test_full_array(void) {
     int_array_t input = {
         .length = MAX_ARRAY_SIZE
@@ -161,5 +259,9 @@ int main(void) {
     RUN_TEST(test_multiple_elements);
     RUN_TEST(test_array_of_objects);
     RUN_TEST(test_full_array);
+    RUN_TEST(test_dynamic_empty_array);
+    RUN_TEST(test_dynamic_single_element);
+    RUN_TEST(test_dynamic_multiple_elements);
+    RUN_TEST(test_dynamic_array_of_objects);
     return UNITY_END();
 }

@@ -86,6 +86,8 @@ typedef struct jstruct_field {
     size_t offset;           /**< Offset of the field within the parent struct (use offsetof) */
     char name[256];          /**< JSON field name */
     jstruct_value_t value;   /**< Type descriptor for this field */
+    bool optional;           /**< If true, the field may be absent from the JSON object without error */
+    size_t present_offset;   /**< Offset of a bool member that receives presence status. Set to 0 to disable (default). Must be non-zero to enable. */
 } jstruct_field_t;
 
 #endif // JSTRUCT_H__

@@ -250,6 +250,11 @@ static bool parse_OBJECT(json_object const* object, jstruct_value_t const* value
 
         json_object* child_object = nullptr;
         if (json_object_object_get_ex(object, child_field->name, &child_object)) {
+            if (child_field->present_offset != 0) {
+                bool* const present_ptr = (bool*) (((uint8_t*) out.any) + child_field->present_offset);
+                *present_ptr = true;
+            }
+
             bool const success = parser_fn(child_object, &child_field->value, child_out, result);
             if (!success) {
                 if (result != nullptr && result->field == nullptr) {
@@ -258,13 +263,18 @@ static bool parse_OBJECT(json_object const* object, jstruct_value_t const* value
 
                 return false;
             }
-        } else {
+        } else if (!child_field->optional) {
             if (result != nullptr) {
                 result->type = JSTRUCT_PARSE_RESULT_TYPE_MISSING_FIELD;
                 result->field = child_field;
             }
 
             return false;
+        } else {
+            if (child_field->present_offset != 0) {
+                bool* const present_ptr = (bool*) (((uint8_t*) out.any) + child_field->present_offset);
+                *present_ptr = false;
+            }
         }
     }
 
